@@ -1,13 +1,18 @@
 <?php 
+//文字化けを修正
 ini_set('default_charset', 'UTF-8');
+
 //データベースに接続
+//３つめのrootはpass
 $link = mysql_connect('localhost','root','root');
 if (!$link) {
 	die('データベースに接続できません: '. mysql_error());
 }
 
 //データベースを選択する
-mysql_select_db('online_bbs',$link);
+mysql_select_db('oneline_bbs',$link);
+
+echo mysql_errno($link) . ": " . mysql_error($link). "\n";
 
 $errors = array();
 
@@ -36,13 +41,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	//エラーが出なければ保存
 	if (count($errors) === 0) {
 		//　保存するためのSQL文を作成
-		$sql = "INSERT INTO `post` (`name`, `comment`, `created_at`) VALUES (`"
+		$sql = "INSERT INTO `POST` (`name`, `comment`, `created_at`) VALUES ('"
 				. mysql_real_escape_string($name) ."`,`"
 				. mysql_real_escape_string($comment) ."`,`"
-				.date(`Y-m-d H:i:s`) . "`)";
+				.date(`Y-m-d H:i:s`) . "')";
+		
 				
 		//保存する
 		mysql_query($sql,$link);
+		
+		//linkを使ってerrorを出力
+		echo mysql_errno($link) . ": " . mysql_error($link) . "\n";
+		
+		mysql_close ($link);
+		
+		header('Location: http://' .$_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI']);
 	}
 }
 
@@ -56,11 +69,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		</head>
 		<body>
 			<h1>ひとこと掲示板</h1>
-			<form action="181_01.php" method="post">
+			
+			<form action="181_02.php" method="POST">
+				<?php if (count($errors)): ?>
+				<ul class="error_list">
+					<?php foreach ($errors as $error): ?>
+					<li>
+						<?php echo htmlspecialchars($error,ENT_QUOTES,'UTF-8') ?>
+					</li>
+					<?php endforeach; ?>
+				</ul>
+				<?php endif; ?>
+				
 				名前：<input type="text" name="commet" size="60" /><br />
 				ひとこと： <input type="text" name="comment" size="60" /><br />
 				<input type="submit" name="submit" value="送信" />
 			</form>
+			
+			<?php 
+			// 投稿された内容を取得するSQLを作成して結果を取得?
+			$sql = "SELECT * FROM `POST` ORDER BY `created_at` DESC";
+			$result = mysql_query($sql,$link);
+			?>
+			
+			<?php if($result !== false && mysql_num_rows($result)): ?>
+			<ul>
+				<?php while ($POST = mysql_fetch_assoc($result)): ?>
+				<li>
+					<?php echo htmlspecialchars($POST['name'],ENT_QUOTES, 'UTF-8'); ?>:
+					<?php echo htmlspecialchars($POST['comment'],ENT_QUOTES, 'UTF-8'); ?>:
+					- <?php echo htmlspecialchars($POST['created_at'],ENT_QUOTES, 'UTF-8'); ?>
+				</li>
+				<?php endwhile; ?>
+			</ul>
+			<?php endif; ?>
+			
+			<?php 
+			// 取得結果を解放して接続を閉じる
+			mysql_free_result($result);
+			mysql_close($link);
+			?>
+			
 		</body>
 		</html>
 		

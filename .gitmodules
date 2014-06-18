@@ -1,0 +1,6 @@
+[submodule "app/Plugin/Migrations"]
+	path = app/Plugin/Migrations
+	url = https://github.com/CakeDC/migrations.git
+[submodule "app/Plugin/Transition"]
+	path = app/Plugin/Transition
+	url = https://github.com/hiromi2424/TransitionComponent.git
